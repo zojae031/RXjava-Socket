@@ -17,11 +17,11 @@ class RXSocket {
     }
 
 
-    private lateinit var socket: Socket
+    private var socket: Socket ?=null
     private val writer: BufferedWriter by lazy {
         BufferedWriter(
             OutputStreamWriter(
-                socket.getOutputStream(),
+                socket!!.getOutputStream(),
                 StandardCharsets.UTF_8
             )
         )
@@ -29,28 +29,26 @@ class RXSocket {
     private val reader: BufferedReader by lazy {
         BufferedReader(
             InputStreamReader(
-                socket.getInputStream(),
+                socket!!.getInputStream(),
                 StandardCharsets.UTF_8
             )
         )
     }
     private val out: PrintWriter by lazy { PrintWriter(writer, true) }
 
-    fun connect(): Flowable<String> = Flowable.create(object : FlowableOnSubscribe<String> {
-        override fun subscribe(emitter: FlowableEmitter<String>) {
-            socket = Socket()
-            socket.connect(InetSocketAddress(IP, port), 3000)
-            while (!socket.isClosed) {
-                try {
-                    emitter.onNext(reader.readLine()?:"error")
-                } catch (e: Exception) {
-                    closeSocket()
-                    emitter.onError(e)
-                }
+    fun connect(): Flowable<String> = Flowable.create({ emitter ->
+        socket = Socket()
+        socket!!.connect(InetSocketAddress(IP, port), 3000)
+
+        while (!socket!!.isClosed) {
+            try {
+                emitter.onNext(reader.readLine() ?: "error")
+            } catch (e: Exception) {
+                emitter.onError(e)
             }
-            emitter.onComplete()
         }
 
+        emitter.onComplete()
     }, BackpressureStrategy.BUFFER)
 
     fun sendData(data: String) {
@@ -58,6 +56,6 @@ class RXSocket {
     }
 
     fun closeSocket() {
-        socket.close()
+        socket?.close()
     }
 }

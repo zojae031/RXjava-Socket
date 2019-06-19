@@ -6,28 +6,24 @@ import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
 
 class MainPresenter(private val view: Contract.View) : Contract.Presenter {
-    private var disposable: Disposable?=null
-    private var socket : RXSocket?=null
+    private var disposable: Disposable? = null
+    private var socket: RXSocket? = null
     override fun connectSocket() {
         socket = RXSocket()
         disposable = socket!!.connect()
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeOn(Schedulers.io())
             .doOnSubscribe { Log.e("doOnSubscribe", "구독!") }
-            .doOnComplete { Log.e("doOnComplete", "성공!") }
-            .doOnError {
-                Log.e("doOnError", "에러띠 : $it")
-                view.fail()
-            }
-            .onErrorReturnItem(
-                "error"
-            )
             .doOnTerminate {
-                Log.e("doOnTerminate","제거")
+                Log.e("doOnTerminate", "제거")
+                closeSocket()
+                disposable?.dispose()
             }
-            .subscribe {
-                view.success(it)
-            }
+            .subscribe(
+                { view.success(it) }
+                , { view.fail() }
+            )
+
 
     }
 
@@ -39,6 +35,5 @@ class MainPresenter(private val view: Contract.View) : Contract.Presenter {
 
     override fun closeSocket() {
         socket?.closeSocket()
-        disposable?.dispose()
     }
 }

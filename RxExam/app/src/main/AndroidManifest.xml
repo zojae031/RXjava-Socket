@@ -3,6 +3,7 @@
           package="exam.rxsocket">
     <uses-permission-sdk-23 android:name="android.permission.INTERNET"/>
     <application
+            android:name=".BaseApplication"
             android:allowBackup="true"
             android:icon="@mipmap/nayeon"
             android:label="@string/app_name"
