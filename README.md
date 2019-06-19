@@ -10,34 +10,31 @@ Problem1. 콜백을 이용한다.
 Problem2. Android.os.Handler 를 이용한다.  
 -> 코드는 비교적 깔끔해지지만 Message Queue관리와 다른 인스턴스 접근이 힘들다.
 
-###### 위 두가지 문제점을 해결하기 위해 Reactive Extension (ReactiveX)의 RXJava 사용, 공부하는데 목적이 있는 프로젝트  
+###### 위 두가지 문제점을 해결하기 위해 Reactive Extension (ReactiveX)의 RXJava 사용, 공부하는데 목적이 있는 프로젝트   
+
+Solution. RxJava를 이용한다.  
+-> 데이터 흐름에 따라 Subscriber로 통지하기 때문에 종속성 감소 및 모듈화가 간편하다.
+
+
 
 <hr>  
 
 ## 내용  
 
-1. MVP Pattern을 이용한 Java Socket통신 간단한 RxJava 프로젝트
-2. SingleTon을 이용하여 Socket을 하나만 유지 (by RxConnectionHelper)
-3. byte[] 배열을 String 으로 변환  
-``String str = new String(bytes,StandardCharsets.UTF_8);``
-4. https://github.com/codeestX/RxSocketClient
-- master Branch : 핸들러를 이용한 간단한 서버통신 코드
-- rx Branch : Rx를 이용한 간단한 서버통신 코드  
-**두 코드의 기능은 완벽히 일치한다.**
+#### MVP Pattern을 이용한 Java Socket통신 간단한 RxJava 프로젝트
+### 1. [master Branch](https://github.com/zojae031/RXjava-Socket/tree/master) : 핸들러를 이용한 간단한 서버통신 코드
+
+<hr>  
+
+### 2. [rx Branch](https://github.com/zojae031/RXjava-Socket/tree/rx) : Rx를 이용한 간단한 서버통신 코드  
+
+- [RxSocket](https://github.com/zojae031/RXjava-Socket/tree/rx/RxSocket) ``coddestX Library``   
+
+- [RxExam](https://github.com/zojae031/RXjava-Socket/tree/rx/RxExam) ``Flowable 사용 직접구현``   
+
+- [BaseServer](https://github.com/zojae031/RXjava-Socket/tree/rx/BaseServer) ``Echo Server``   
+
 
 <hr>
 
-## 추가해야 하는 부분  
-##### bulidType 아래  
-    allprojects {
-        repositories {
-            maven { url "https://jitpack.io" }
-        }
-    }
-
-##### dependency  
-    implementation 'com.github.codeestX:RxSocketClient:v1.0.1'
-    implementation 'io.reactivex.rxjava2:rxjava:2.2.6'
-    implementation 'io.reactivex.rxjava2:rxandroid:2.1.1'
-    implementation 'com.google.code.gson:gson:2.8.5'
 
