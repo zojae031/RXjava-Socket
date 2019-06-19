@@ -4,50 +4,43 @@ RXjava / RXAndroid 예제
 ## [Rx Flowable](https://github.com/zojae031/RXjava-Socket/blob/rx/RxExam/app/src/main/java/exam/rxsocket/RXSocket.kt)   
 
 ```kotlin
- fun connect(): Flowable<String> = Flowable.create(object : FlowableOnSubscribe<String> {
-        override fun subscribe(emitter: FlowableEmitter<String>) {
-            socket = Socket()
-            socket.connect(InetSocketAddress(IP, port), 3000)
-            while (!socket.isClosed) {
-                try {
-                    emitter.onNext(reader.readLine()?:"error")
-                } catch (e: Exception) {
-                    closeSocket()
-                    emitter.onError(e)
-                }
+ fun connect(): Flowable<String> = Flowable.create({ emitter ->
+        socket = Socket()
+        socket!!.connect(InetSocketAddress(IP, port), 3000)
+
+        while (!socket!!.isClosed) {
+            try {
+                emitter.onNext(reader.readLine() ?: "error")
+            } catch (e: Exception) {
+                emitter.onError(e)
             }
-            emitter.onComplete()
         }
 
+        emitter.onComplete()
     }, BackpressureStrategy.BUFFER)
 ```
 
 ## [Rx Subscriber](https://github.com/zojae031/RXjava-Socket/blob/rx/RxExam/app/src/main/java/exam/rxsocket/MainPresenter.kt)  
 
 ```kotlin
- override fun connectSocket() {
+    override fun connectSocket() {
         socket = RXSocket()
         disposable = socket!!.connect()
             .observeOn(AndroidSchedulers.mainThread())
             .subscribeOn(Schedulers.io())
             .doOnSubscribe { Log.e("doOnSubscribe", "구독!") }
-            .doOnComplete { Log.e("doOnComplete", "성공!") }
-            .doOnError {
-                Log.e("doOnError", "에러띠 : $it")
-                view.fail()
-            }
-            .onErrorReturnItem(
-                "error"
-            )
             .doOnTerminate {
-                Log.e("doOnTerminate","제거")
+                Log.e("doOnTerminate", "제거")
+                closeSocket()
+                disposable?.dispose()
             }
-            .subscribe {
-                view.success(it)
-            }
+            .subscribe(
+                { view.success(it) }
+                , { view.fail() }
+            )
+
 
     }
-    
 ``` 
 
 ## [Echo Server](https://github.com/zojae031/RXjava-Socket/blob/rx/BaseServer/src/Server.kt)  
