@@ -1,43 +1,91 @@
-# RXjavaExample
+# Rx Branch
 RXjava / RXAndroid 예제
 
+## [Rx Flowable](https://github.com/zojae031/RXjava-Socket/blob/rx/RxExam/app/src/main/java/exam/rxsocket/RXSocket.kt)   
 
-
-## 개요
-Problem1. 콜백을 이용한다.  
--> 콜백지옥에 빠져 코드가독성이 현저히 저하
-
-Problem2. Android.os.Handler 를 이용한다.  
--> 코드는 비교적 깔끔해지지만 Message Queue관리와 다른 인스턴스 접근이 힘들다.
-
-###### 위 두가지 문제점을 해결하기 위해 Reactive Extension (ReactiveX)의 RXJava 사용, 공부하는데 목적이 있는 프로젝트  
-
-<hr>  
-
-## 내용  
-
-1. MVP Pattern을 이용한 Java Socket통신 간단한 RxJava 프로젝트
-2. SingleTon을 이용하여 Socket을 하나만 유지 (by RxConnectionHelper)
-3. byte[] 배열을 String 으로 변환  
-``String str = new String(bytes,StandardCharsets.UTF_8);``
-4. https://github.com/codeestX/RxSocketClient
-- master Branch : 핸들러를 이용한 간단한 서버통신 코드
-- rx Branch : Rx를 이용한 간단한 서버통신 코드  
-**두 코드의 기능은 완벽히 일치한다.**
-
-<hr>
-
-## 추가해야 하는 부분  
-##### bulidType 아래  
-    allprojects {
-        repositories {
-            maven { url "https://jitpack.io" }
+```kotlin
+ fun connect(): Flowable<String> = Flowable.create(object : FlowableOnSubscribe<String> {
+        override fun subscribe(emitter: FlowableEmitter<String>) {
+            socket = Socket()
+            socket.connect(InetSocketAddress(IP, port), 3000)
+            while (!socket.isClosed) {
+                try {
+                    emitter.onNext(reader.readLine()?:"error")
+                } catch (e: Exception) {
+                    closeSocket()
+                    emitter.onError(e)
+                }
+            }
+            emitter.onComplete()
         }
+
+    }, BackpressureStrategy.BUFFER)
+```
+
+## [Rx Subscriber](https://github.com/zojae031/RXjava-Socket/blob/rx/RxExam/app/src/main/java/exam/rxsocket/MainPresenter.kt)  
+
+```kotlin
+ override fun connectSocket() {
+        socket = RXSocket()
+        disposable = socket!!.connect()
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribeOn(Schedulers.io())
+            .doOnSubscribe { Log.e("doOnSubscribe", "구독!") }
+            .doOnComplete { Log.e("doOnComplete", "성공!") }
+            .doOnError {
+                Log.e("doOnError", "에러띠 : $it")
+                view.fail()
+            }
+            .onErrorReturnItem(
+                "error"
+            )
+            .doOnTerminate {
+                Log.e("doOnTerminate","제거")
+            }
+            .subscribe {
+                view.success(it)
+            }
+
     }
+    
+``` 
 
-##### dependency  
-    implementation 'com.github.codeestX:RxSocketClient:v1.0.1'
-    implementation 'io.reactivex.rxjava2:rxjava:2.2.6'
-    implementation 'io.reactivex.rxjava2:rxandroid:2.1.1'
-    implementation 'com.google.code.gson:gson:2.8.5'
+## [Echo Server](https://github.com/zojae031/RXjava-Socket/blob/rx/BaseServer/src/Server.kt)  
 
+```kotlin
+object Server {
+    val socket = ServerSocket(5050)
+    private lateinit var client: Socket
+    private val reader by lazy { BufferedReader(InputStreamReader(client.getInputStream(), StandardCharsets.UTF_8)) }
+    private val writer by lazy { BufferedWriter(OutputStreamWriter(client.getOutputStream(), StandardCharsets.UTF_8)) }
+    private val out by lazy { PrintWriter(writer,true) }
+    fun open() {
+        try {
+
+            println(InetAddress.getLocalHost().hostAddress)
+            client = socket.accept()
+            println("클라이언트 접속 : ${client.localAddress}")
+
+            while (true) {
+                //읽기
+                val data = reader.readLine() ?: break
+                println("수신 완료 : $data")
+                //쓰기
+                out.println(data)
+                println("전송완료 : $data")
+
+            }
+
+            client.close()
+            socket.close()
+
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
+    }
+}
+```
+
+## [CoddestX](https://github.com/zojae031/RXjava-Socket/tree/rx/RxSocket)  
+##### 라이브러리를 사용한 코드이기 때문에 생략
